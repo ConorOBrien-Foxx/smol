@@ -30,8 +30,6 @@
 
 # Executables
 *.exe
-# not in original file
-*.exe.stackdump
 *.out
 *.app
 *.i*86
@@ -52,3 +50,9 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+
+# not in original file
+*.exe.stackdump
+test.txt
+test.smol

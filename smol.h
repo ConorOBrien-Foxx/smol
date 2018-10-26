@@ -42,7 +42,7 @@ typedef struct SMOL_STATE {
 
 typedef void (*ATOM_ITER_FN)(ATOM);
 
-SMOL_STATE ss_make(char*);
+SMOL_STATE ss_make(char*, size_t);
 int between(int64_t, int64_t, int64_t);
 ATOM ss_parse_op(SMOL_STATE*, char);
 void ss_call(SMOL_STATE*, char);

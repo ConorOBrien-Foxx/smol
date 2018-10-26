@@ -5,15 +5,16 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "file.h"
 #include "smol.h"
 int AP_PADDING = 0;
 
-SMOL_STATE ss_make(char* program) {
+SMOL_STATE ss_make(char* program, size_t size) {
     SMOL_STATE res;
     res.stack = al_make();
     res.program = program;
     res.ptr = 0;
-    res.size = strlen(program);
+    res.size = size;
     res.mode = SM_COLLECT;
     res.saved_mode = SM_STRING;
     return res;
@@ -275,7 +276,7 @@ void ss_call(SMOL_STATE* state, char op) {
         }
         
         default:
-            fprintf(stderr, "Unrecognized character %c\n", op);
+            fprintf(stderr, "Unrecognized character `%c` (ord: %i) \n", op, op);
             break;
     }
 }
@@ -336,6 +337,8 @@ ATOM_LIST* al_make() {
 }
 ATOM_NODE* an_make() {
     ATOM_NODE* res = malloc(sizeof(ATOM_NODE));
+    res->prev = NULL;
+    res->next = NULL;
     return res;
 }
 
@@ -500,7 +503,13 @@ int main(int argc, char** argv) {
         return 1;
     }
     
-    SMOL_STATE state = ss_make(argv[1]);
+    size_t size;
+    char* file_name = argv[1];
+    
+    char* program = read_file(file_name, &size);
+    
+    SMOL_STATE state = ss_make(program, size);
+    
     ss_run(&state);
     
 }
