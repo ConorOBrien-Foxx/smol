@@ -212,7 +212,7 @@ void ss_call(SMOL_STATE* state, char op) {
             break;
         }
         
-        
+        // pop from (temporary)
         case 'o': {
             ATOM top = ss_pop(state);
             
@@ -224,6 +224,40 @@ void ss_call(SMOL_STATE* state, char op) {
             
             break;
         }
+        
+        // step range
+        case 'A': {
+            ATOM upper, lower, delta;
+            
+            delta = ss_pop(state);
+            upper = ss_pop(state);
+            lower = ss_pop(state);
+            
+            assert(delta.type == AT_INTEGER);
+            assert(upper.type == AT_INTEGER);
+            assert(lower.type == AT_INTEGER);
+            
+            int64_t up = upper.val.ival,
+                    low = lower.val.ival,
+                    step = delta.val.ival;
+            
+            ATOM_LIST* res = al_make();
+            
+            for(int64_t i = low; i < up; i += step) {
+                al_push(res, atom(i));
+            }
+            
+            ss_push(state, atom_of_list(res));
+            
+            break;
+        }
+        
+        // step-1 range
+        case 'a': 
+            ss_push(state, atom(1));
+            ss_call(state, 'A');
+            break;
+        
         
         // duplicate by reference
         case ':': {
@@ -324,21 +358,27 @@ void al_push(ATOM_LIST* list, ATOM val) {
 ATOM al_pop(ATOM_LIST* list) {
     ATOM_NODE* tail = list->tail;
     ATOM res = tail->head;
-
-    if(list->size == 1) {
-        list->head = NULL;
-        list->tail = NULL;
-    }
-    else {
-        
-        // make 2nd to last element have no next element
-        tail->prev->next = NULL;
-        
-        // update list's tail
-        list->tail = tail->prev;
+    
+    switch(list->size) {
+        case 0:
+            fprintf(stderr, "Popping from an empty list!");
+            break;
+            
+        case 1:
+            list->head = NULL;
+            list->tail = NULL;
+            break;
+            
+        default:
+            // make 2nd to last element have no next element
+            tail->prev->next = NULL;
+            
+            // update list's tail
+            list->tail = tail->prev;
+            break;
     }
     
-    // destroy former tail
+    // destroy former tail node
     // an_free(tail);
 
     list->size--;
@@ -353,15 +393,9 @@ void al_iter(ATOM_LIST* list, ATOM_ITER_FN fn) {
 }
 
 ATOM_LIST* al_concat(ATOM_LIST* first, ATOM_LIST* second) {
-    ATOM_LIST* res = al_make();
+    ATOM_LIST* res = al_copy(first);
     
-    AL_ITER(iter, first) {
-        al_push(res, iter->head);
-    }
-    
-    AL_ITER(iter, second) {
-        al_push(res, iter->head);
-    }
+    al_append(res, second);
     
     return res;
 }
@@ -369,11 +403,15 @@ ATOM_LIST* al_concat(ATOM_LIST* first, ATOM_LIST* second) {
 ATOM_LIST* al_copy(ATOM_LIST* list) {
     ATOM_LIST* res = al_make();
     
-    AL_ITER(iter, list) {
-        al_push(res, iter->head);
-    }
+    al_append(res, list);
     
     return res;
+}
+
+void al_append(ATOM_LIST* source, ATOM_LIST* copy) {
+    AL_ITER(iter, copy) {
+        al_push(source, iter->head);
+    }
 }
 
 ATOM atom_copy(ATOM source) {

@@ -64,7 +64,7 @@ void al_push(ATOM_LIST*, ATOM);
 ATOM al_pop(ATOM_LIST*);
 ATOM_LIST* al_concat(ATOM_LIST*, ATOM_LIST*);
 ATOM_LIST* al_copy(ATOM_LIST*);
-
+void al_append(ATOM_LIST*, ATOM_LIST*);
 void al_iter(ATOM_LIST*, ATOM_ITER_FN);
 ATOM atom(int64_t);
 ATOM atom_copy(ATOM);
